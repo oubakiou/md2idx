@@ -1,0 +1,31 @@
+{
+  "name": "md2idx devcontainer",
+  // https://hub.docker.com/r/microsoft/devcontainers-base
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    // https://github.com/devcontainers/features/tree/main/src/node
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts",
+      "pnpmVersion": "none"
+    },
+    // https://github.com/devcontainers/features/tree/main/src/github-cli
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "2.90.0"
+    }
+  },
+  "runArgs": ["--name", "${localEnv:USER}-md2idx"],
+  "postCreateCommand": "./local_setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/bin/zsh"
+          }
+        }
+      }
+    }
+  }
+}

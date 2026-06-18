@@ -1,0 +1,45 @@
+{
+  "env": {
+    "DISABLE_AUTOUPDATER": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Edit(src/**)",
+      "MultiEdit(src/**)",
+      "Write(src/**)",
+      "Edit(docs/**)",
+      "MultiEdit(docs/**)",
+      "Write(docs/**)",
+      "Edit(.temp/**)",
+      "MultiEdit(.temp/**)",
+      "Write(.temp/**)",
+      "Bash(vp check *)",
+      "Bash(npx check *)",
+      "Bash(vp test *)",
+      "Bash(npx vp test *)",
+      "Bash(vp build *)",
+      "Bash(npx vp build *)",
+      "Bash(npm test *)",
+      "Bash(npm run build *)",
+      "Bash(npm run build:*)",
+      "Bash(npx vp *)",
+      "LSP",
+      "mcp__ide__getDiagnostics",
+      "Bash(bash .claude/skills/md-review/scripts/request-review.sh:*)",
+      "Bash(bash .claude/skills/md-review/scripts/wait-feedback.sh:*)",
+      "Bash(npx mdxg-redline --clean:*)",
+      "Grep"
+    ],
+    "deny": ["Read(**.archive.md)", "Edit(**.archive.md)"]
+  },
+  "enableAllProjectMcpServers": true,
+  "statusLine": {
+    "type": "command",
+    "command": ".claude/statusline.ts"
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "language": "japanese",
+  "autoMemoryEnabled": false
+}
