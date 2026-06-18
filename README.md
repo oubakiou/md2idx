@@ -21,6 +21,8 @@ md2idx README.md | jq -r '.index'                   # now available as md2idx
 
 ## Usage
 
+### When a human invokes the CLI directly
+
 ```
 md2idx [file] [--pretty]
 ```
@@ -36,6 +38,18 @@ Pipe from stdin:
 ```sh
 cat spec.md | md2idx | jq -r '.index'
 ```
+
+### When an LLM invokes the CLI via a skill
+
+```bash
+# Skill installation example with gh skill install
+gh skill install oubakiou/md2idx md2idx-read --agent claude-code --scope project
+
+# Skill installation example with npx skills add
+npx skills add oubakiou/md2idx --skill md2idx-read --agent claude-code --yes
+```
+
+An LLM agent (e.g. Claude Code) uses the `md2idx-read` skill to read large Markdown files efficiently. Instead of loading an entire document into context, the agent fetches the index first, then retrieves only the sections it needs — saving tokens and keeping context focused.
 
 ## Output format
 
