@@ -6,16 +6,17 @@
 [![English](https://img.shields.io/badge/Language-English-lightgrey?style=for-the-badge)](./README.md)
 [![日本語](https://img.shields.io/badge/言語-日本語-blue?style=for-the-badge)](./README_ja.md)
 
-**大きな Markdown を見出しレベルで分割した JSON に変換する。`jq` で目次を読み、必要なセクションだけを LLM に渡す — 最小トークンで最大のコンテキストを。**
+**大きな Markdown を見出しレベルで分割し、通し番号付きインデックス（目次）とセクション配列の JSON に変換する。LLM 自身がインデックスを読んで必要なセクションだけを取得する — 最小トークンで最大のコンテキストを。**
 
 ## Quick start
 
 ```sh
-npm install -g md2idx
+npx md2idx README.md | jq -r '.index'              # まずインデックスを読む
+npx md2idx README.md | jq -r '.sections[2]'        # 必要なセクションを取る
+npx md2idx README.md | jq -r '.sections[0:3][]'    # ある見出し配下をまとめて取る
 
-md2idx large.md | jq -r '.index'              # まず目次を読む
-md2idx large.md | jq -r '.sections[2]'        # 必要なセクションを取る
-md2idx large.md | jq -r '.sections[0:3][]'    # ある見出し配下をまとめて取る
+npm install -g md2idx                               # グローバルインストール
+md2idx README.md | jq -r '.index'                   # md2idx だけで実行可能に
 ```
 
 ## 使い方
@@ -51,7 +52,7 @@ cat spec.md | md2idx | jq -r '.index'
 }
 ```
 
-- **`index`** — 見出しマーカー付き番号目次の単一文字列。各行は `<#でレベル表現> <連番>. <見出しテキスト>`。連番は `sections` の配列添字に一致する。
+- **`index`** — LLM がどのセクションを取得すべきか判断するための、見出しマーカー付き番号目次の単一文字列。各行は `<#でレベル表現> <連番>. <見出しテキスト>`。連番は `sections` の配列添字に一致する。
 - **`sections`** — 見出し行＋本文の生 Markdown 文字列をフラットに並べた配列。文書の出現順。ある見出しの子孫は必ず連続した添字範囲を占めるため、スライスでの範囲取得が成立する。
 
 ### プリアンブル

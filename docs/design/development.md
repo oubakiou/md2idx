@@ -10,26 +10,18 @@
 ## セットアップ
 
 ```sh
-npm install
+bash local_setup.sh
 ```
 
 ## コマンド
 
-| コマンド              | 説明                               |
-| --------------------- | ---------------------------------- |
-| `npm test`            | テスト実行（vitest）               |
-| `npm run build`       | ビルド（`dist/md2idx.mjs` 生成）   |
-| `npx vp check`        | lint / fmt / type チェック一括実行 |
-| `npx vp check --fix`  | 自動修正付きチェック               |
-| `npx vp test --watch` | テストのウォッチモード             |
-
-## プロジェクト構成
-
-```
-src/md2idx.ts    ソースコード（パーサ + コアロジック + CLI + インラインテスト）
-dist/md2idx.mjs  ビルド成果物（CLI バイナリ）
-docs/design/     設計ドキュメント
-```
+| コマンド          | 説明                               |
+| ----------------- | ---------------------------------- |
+| `vp test`         | テスト実行（vitest）               |
+| `vp pack --dts`   | ビルド（`dist/md2idx.mjs` 生成）   |
+| `vp check`        | lint / fmt / type チェック一括実行 |
+| `vp check --fix`  | 自動修正付きチェック               |
+| `vp test --watch` | テストのウォッチモード             |
 
 ## テスト
 
