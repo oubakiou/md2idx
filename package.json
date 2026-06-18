@@ -1,6 +1,6 @@
 {
   "name": "md2idx",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "md2idx — Markdown to indexed JSON. Slice big docs with jq, feed LLMs only what they need.",
   "keywords": [
     "llm",
