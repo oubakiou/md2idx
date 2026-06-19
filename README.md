@@ -6,7 +6,7 @@
 [![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](./README.md)
 [![日本語](https://img.shields.io/badge/言語-日本語-lightgrey?style=for-the-badge)](./README_ja.md)
 
-**Split a large Markdown into heading-level JSON with a numbered index (table of contents) and a sections array. The LLM reads the index and retrieves only the sections it needs — saving tokens while keeping the context you need.**
+**Split a large Markdown into heading-level JSON with a numbered index (table of contents) and a sections array. Your LLM reads the index and retrieves only the sections it needs — instead of loading the whole file into context.**
 
 ## Quick start
 
@@ -19,6 +19,36 @@ npx md2idx data.md | jq -r '.sections[4]' | grep Tokyo  # extract lines containi
 npm install -g md2idx                               # global install
 md2idx README.md | jq -r '.index'                   # now available as md2idx
 ```
+
+## Why md2idx
+
+### Before / After
+
+Without md2idx, reading a single section of a large document means loading the entire file:
+
+```
+Read spec.md              → 5,000 lines into context (all of them)
+"What's the retry policy?"  → agent searches through everything
+```
+
+With md2idx, the agent reads a 20-line index first and fetches only what it needs:
+
+```sh
+npx md2idx spec.md | jq -r '.index'       # ~20 lines (table of contents)
+npx md2idx spec.md | jq -r '.sections[5]'  # ~80 lines (just that section)
+# Total: ~100 lines in context instead of 5,000
+```
+
+### Why not just grep for headings?
+
+`grep -nE '#{1,6} ' spec.md` gives you a list of headings. For simple cases, that works — but md2idx solves several problems grep doesn't:
+
+|                                              | grep                                                      | md2idx                                  |
+| -------------------------------------------- | --------------------------------------------------------- | --------------------------------------- |
+| Get section content (not just heading lines) | Requires calculating line ranges + Read with offset/limit | `jq '.sections[N]'`                     |
+| Setext headings (`===` / `---`)              | Not detected                                              | Detected                                |
+| `#` inside code fences                       | False positives                                           | Skipped                                 |
+| Inline markup in headings (`[link](url)`)    | Included as-is                                            | Stripped in index, preserved in section |
 
 ## Usage
 

@@ -3,9 +3,15 @@
   "version": "0.2.0",
   "description": "md2idx — Markdown to indexed JSON. Slice big docs with jq, feed LLMs only what they need.",
   "keywords": [
+    "context-window",
     "llm",
     "llm-agent",
-    "markdown"
+    "markdown",
+    "markdown-index",
+    "markdown-parser",
+    "markdown-splitter",
+    "markdown-toc",
+    "token-optimization"
   ],
   "homepage": "https://github.com/oubakiou/md2idx#readme",
   "bugs": {
