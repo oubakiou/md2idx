@@ -6,7 +6,7 @@
 [![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](./README.md)
 [![日本語](https://img.shields.io/badge/言語-日本語-lightgrey?style=for-the-badge)](./README_ja.md)
 
-**Split a large Markdown into heading-level JSON with a numbered index (table of contents) and a sections array. The LLM reads the index and retrieves only the sections it needs — minimal tokens, maximum context.**
+**Split a large Markdown into heading-level JSON with a numbered index (table of contents) and a sections array. The LLM reads the index and retrieves only the sections it needs — saving tokens while keeping the context you need.**
 
 ## Quick start
 
@@ -14,6 +14,7 @@
 npx md2idx README.md | jq -r '.index'              # read the index first
 npx md2idx README.md | jq -r '.sections[2]'        # grab one section by number
 npx md2idx README.md | jq -r '.sections[0:3][]'    # grab a contiguous range
+npx md2idx data.md | jq -r '.sections[4]' | grep Tokyo  # extract lines containing "Tokyo" from a section
 
 npm install -g md2idx                               # global install
 md2idx README.md | jq -r '.index'                   # now available as md2idx
@@ -40,6 +41,8 @@ cat spec.md | md2idx | jq -r '.index'
 ```
 
 ### When an LLM invokes the CLI via a skill
+
+[Skill details (SKILL.md)](https://mkdn.review/?url=https%3A%2F%2Fgithub.com%2Foubakiou%2Fmd2idx%2Fblob%2Fmain%2Fskills%2Fmd2idx-read%2FSKILL.md#p:introduction)
 
 ```bash
 # Skill installation example with gh skill install

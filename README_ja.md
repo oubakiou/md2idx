@@ -6,7 +6,7 @@
 [![English](https://img.shields.io/badge/Language-English-lightgrey?style=for-the-badge)](./README.md)
 [![日本語](https://img.shields.io/badge/言語-日本語-blue?style=for-the-badge)](./README_ja.md)
 
-**大きな Markdown を見出しレベルで分割し、通し番号付きインデックス（目次）とセクション配列の JSON に変換する。LLM 自身がインデックスを読んで必要なセクションだけを取得する — 最小トークンで最大のコンテキストを。**
+**大きな Markdown を見出しレベルで分割し、通し番号付きインデックス（目次）とセクション配列の JSON に変換する。LLM 自身がインデックスを読んで必要なセクションだけを取得する — トークンを節約しつつ必要なコンテキストを。**
 
 ## Quick start
 
@@ -14,6 +14,7 @@
 npx md2idx README.md | jq -r '.index'              # まずインデックスを読む
 npx md2idx README.md | jq -r '.sections[2]'        # 必要なセクションを取る
 npx md2idx README.md | jq -r '.sections[0:3][]'    # ある見出し配下をまとめて取る
+npx md2idx data.md | jq -r '.sections[4]' | grep Tokyo  # 対象セクションからTokyoを含む行を抽出
 
 npm install -g md2idx                               # グローバルインストール
 md2idx README.md | jq -r '.index'                   # md2idx だけで実行可能に
@@ -40,6 +41,8 @@ cat spec.md | md2idx | jq -r '.index'
 ```
 
 ### LLM がスキル経由で CLI を呼び出す場合
+
+[スキルの詳細（SKILL.md）](https://mkdn.review/?url=https%3A%2F%2Fgithub.com%2Foubakiou%2Fmd2idx%2Fblob%2Fmain%2Fskills%2Fmd2idx-read%2FSKILL.md#p:introduction)
 
 ```bash
 # gh skill install でのインストール例
