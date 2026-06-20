@@ -25,11 +25,17 @@ The bundled `scripts/md2idx-run.sh` wrapper handles file size checking, md2idx c
 
 ## Workflow
 
-Call the wrapper via `bash` with a **project-root-relative path** (not absolute) so it matches `permissions.allow` prefix rules:
+Call the wrapper via `bash` with a **project-root-relative path** (not absolute) so it matches `permissions.allow` prefix rules. The base directory depends on which agent installed the skill — `.claude/skills/` for Claude Code, `.agents/skills/` for other agents (Codex CLI uses `.codex/skills/` in some configurations):
 
 ```bash
+# Claude Code:
 bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --index
+
+# Other agents:
+bash .agents/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --index
 ```
+
+Use the path that matches your agent's install directory throughout all commands below.
 
 The wrapper performs these steps internally:
 
@@ -40,7 +46,11 @@ The wrapper performs these steps internally:
 ### Step 1: Fetch the index
 
 ```bash
+# Claude Code:
 bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --index
+
+# Other agents:
+bash .agents/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --index
 ```
 
 If exit code is 2 (file too small), use Read tool directly. If exit code is 3 (md2idx unavailable), skip to the fallback procedure.
@@ -72,7 +82,11 @@ Read the index and identify which sections are relevant to the current task.
 **Single section:**
 
 ```bash
+# Claude Code:
 bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections[2]'
+
+# Other agents:
+bash .agents/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections[2]'
 ```
 
 **Contiguous range (a heading and all its children):**
@@ -80,7 +94,11 @@ bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sect
 Using the index example above, to retrieve "Usage" (2) and its child "Options" (3):
 
 ```bash
+# Claude Code:
 bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections[2:4][]'
+
+# Other agents:
+bash .agents/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections[2:4][]'
 ```
 
 The jq slice `[N:M]` returns indices N through M-1.
@@ -88,7 +106,11 @@ The jq slice `[N:M]` returns indices N through M-1.
 **Multiple non-contiguous sections:**
 
 ```bash
+# Claude Code:
 bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections[0], .sections[3], .sections[7]'
+
+# Other agents:
+bash .agents/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections[0], .sections[3], .sections[7]'
 ```
 
 ### Step 4: Repeat if more sections are needed
@@ -127,12 +149,22 @@ The fallback cannot distinguish setext headings (`===` / `---`) or `#` inside fe
 
 ## Permissions setup
 
-One `permissions.allow` rule covers the entire workflow:
+One `permissions.allow` rule covers the entire workflow. Use the path matching your agent:
 
 ```json
+// Claude Code:
 {
   "permissions": {
     "allow": ["Bash(bash .claude/skills/md2idx-read/scripts/md2idx-run.sh:*)"]
+  }
+}
+```
+
+```json
+// Other agents:
+{
+  "permissions": {
+    "allow": ["Bash(bash .agents/skills/md2idx-read/scripts/md2idx-run.sh:*)"]
   }
 }
 ```

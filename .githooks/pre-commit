@@ -5,6 +5,8 @@
 # ルールが見落とされる経路)。set -e で最初の失敗で止める。
 set -e
 
+diff_before=$(git diff --name-only | sort)
+
 # 全 commit で dist / 生成物を最新ソースから再ビルドして同期する運用。
 # 依存バージョンが drift すると dist も動くため、dist 差分の再現性は lockfile (npm ci) /
 # version range 管理側で担保する前提。
@@ -12,9 +14,19 @@ vp pack --dts
 
 vp check --fix
 
-# --fix による変更がステージされていないファイルに残っている場合、再ステージして含める
-git diff --name-only --diff-filter=M | while IFS= read -r file; do
-  git add "$file"
-done
+# vp check --fix や vp pack --dts がワークツリーを変更した場合、
+# git commit が index.lock を保持しているため hook 内から git add できない。
+# コミット前から存在していた unstaged 変更と区別するため、前後の diff を比較する。
+diff_after=$(git diff --name-only | sort)
+if [ "$diff_before" != "$diff_after" ]; then
+  hook_changed=$(comm -13 <(echo "$diff_before") <(echo "$diff_after"))
+  echo ""
+  echo "error: pre-commit hook が以下のファイルを変更しました:"
+  echo "$hook_changed"
+  echo ""
+  echo "変更を確認し、ステージしてから再度コミットしてください:"
+  echo "  git add -u && git commit"
+  exit 1
+fi
 
 vp test
