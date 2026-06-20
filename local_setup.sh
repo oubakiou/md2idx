@@ -37,6 +37,7 @@ gh skill install anthropics/skills skill-creator --agent claude-code --scope pro
 gh skill install oubakiou/skills guarded-webfetch-codex --agent claude-code --scope project
 gh skill install oubakiou/skills guarded-websearch-codex --agent claude-code --scope project
 gh skill install oubakiou/mdxg-redline md-review --agent claude-code --scope project
+gh skill install oubakiou/mdxg-redline md-review --agent codex --scope project
 
 # python3はskill-creator 同梱の Python スクリプト (eval-viewer 等) を実行するために必要
 # bubblewrapはCodexに必要
