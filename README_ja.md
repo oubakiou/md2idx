@@ -14,6 +14,7 @@
 npx md2idx README.md | jq -r '.index'              # まずインデックスを読む
 npx md2idx README.md | jq -r '.sections[2]'        # 必要なセクションを取る
 npx md2idx README.md | jq -r '.sections[0:3][]'    # ある見出し配下をまとめて取る
+npx md2idx README.md | jq -r '.sections | join("\n\n")'  # 全セクションを結合して全文を復元
 npx md2idx data.md | jq -r '.sections[4]' | grep Tokyo  # 対象セクションからTokyoを含む行を抽出
 
 npm install -g md2idx                               # グローバルインストール

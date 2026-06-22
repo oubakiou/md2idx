@@ -14,6 +14,7 @@
 npx md2idx README.md | jq -r '.index'              # read the index first
 npx md2idx README.md | jq -r '.sections[2]'        # grab one section by number
 npx md2idx README.md | jq -r '.sections[0:3][]'    # grab a contiguous range
+npx md2idx README.md | jq -r '.sections | join("\n\n")'  # join all sections back into the full document
 npx md2idx data.md | jq -r '.sections[4]' | grep Tokyo  # extract lines containing "Tokyo" from a section
 
 npm install -g md2idx                               # global install

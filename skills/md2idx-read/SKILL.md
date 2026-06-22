@@ -113,6 +113,18 @@ bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sect
 bash .agents/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections[0], .sections[3], .sections[7]'
 ```
 
+**All sections (reconstruct the full document):**
+
+```bash
+# Claude Code:
+bash .claude/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections | join("\n\n")'
+
+# Other agents:
+bash .agents/skills/md2idx-read/scripts/md2idx-run.sh "<file>" --sections '.sections | join("\n\n")'
+```
+
+This loads the whole file into context, which defeats the token-saving purpose of this skill. Only use it when you genuinely need every section — otherwise prefer the selective retrieval above.
+
 ### Step 4: Repeat if more sections are needed
 
 If the retrieved sections indicate that additional sections are needed, return to Step 3. The index from Step 1 is already available — use it to determine the additional section numbers.
