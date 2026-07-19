@@ -1,7 +1,4 @@
-#!/usr/bin/env node
-
-import { readFileSync, realpathSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
 
 interface Heading {
   depth: number
@@ -40,19 +37,19 @@ const NO_PARAGRAPH = -1
 
 const stripInlineMarkup = (text: string): string =>
   text
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/\[([^\]]*)\]\[[^\]]*\]/g, '$1')
-    .replace(/``([^`]*)``/g, '$1')
-    .replace(/`([^`]*)`/g, '$1')
-    .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1')
-    .replace(/_{1,3}([^_]+)_{1,3}/g, '$1')
-    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/!\[(?<text>[^\]]*)\]\([^)]*\)/g, '$<text>')
+    .replace(/\[(?<text>[^\]]*)\]\([^)]*\)/g, '$<text>')
+    .replace(/\[(?<text>[^\]]*)\]\[[^\]]*\]/g, '$<text>')
+    .replace(/``(?<text>[^`]*)``/g, '$<text>')
+    .replace(/`(?<text>[^`]*)`/g, '$<text>')
+    .replace(/\*{1,3}(?<text>[^*]+)\*{1,3}/g, '$<text>')
+    .replace(/_{1,3}(?<text>[^_]+)_{1,3}/g, '$<text>')
+    .replace(/~~(?<text>[^~]+)~~/g, '$<text>')
 
 const stripAtxTrailing = (line: string): string => line.replace(/\s+#+\s*$/, '')
 
-const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/
-const ATX_RE = /^ {0,3}(#{1,6})\s/
+const FENCE_RE = /^ {0,3}(?<marker>`{3,}|~{3,})/
+const ATX_RE = /^ {0,3}(?<hashes>#{1,6})\s/
 
 const updateFenceState = (line: string, fence: FenceState): FenceState => {
   const opening = FENCE_RE.exec(line)
@@ -62,7 +59,7 @@ const updateFenceState = (line: string, fence: FenceState): FenceState => {
   if (!fence.active) {
     return { active: true, char: opening[1][0], len: opening[1].length }
   }
-  const closing = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line)
+  const closing = /^ {0,3}(?<marker>`{3,}|~{3,})\s*$/.exec(line)
   if (closing && line.trimStart().startsWith(fence.char) && closing[1].length >= fence.len) {
     return INACTIVE_FENCE
   }
@@ -238,17 +235,6 @@ const readInput = (filePath: string | null): string => {
   return readFileSync(0, 'utf8')
 }
 
-const isCli = (): boolean => {
-  if (import.meta.vitest) {
-    return false
-  }
-  try {
-    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))
-  } catch {
-    return false
-  }
-}
-
 interface ParsedCliArgs {
   flags: string[]
   positionals: string[]
@@ -271,9 +257,21 @@ const parseCliArgs = (args: string[]): ParsedCliArgs => {
   }
 }
 
-if (isCli()) {
-  const KNOWN_FLAGS = new Set(['--pretty', '--help', '-h'])
-  const parsed = parseCliArgs(process.argv.slice(2))
+const KNOWN_FLAGS = new Set(['--pretty', '--help', '-h'])
+
+const emitResult = (parsed: ParsedCliArgs): void => {
+  const pretty = parsed.flags.includes('--pretty')
+  const filePath = parsed.positionals[0] ?? null
+  const result = md2idx(readInput(filePath))
+  if (pretty) {
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
+  } else {
+    process.stdout.write(`${JSON.stringify(result)}\n`)
+  }
+}
+
+export const runCli = (argv: string[]): void => {
+  const parsed = parseCliArgs(argv)
   const hasHelp = parsed.flags.includes('--help') || parsed.flags.includes('-h')
   const unknownFlag = parsed.flags.find((flag) => !KNOWN_FLAGS.has(flag))
   const hasError = Boolean(unknownFlag) || parsed.positionals.length > 1
@@ -281,18 +279,10 @@ if (isCli()) {
   if (hasHelp || hasError) {
     process.stderr.write(USAGE)
     process.exitCode = Number(hasError)
-  } else {
-    const pretty = parsed.flags.includes('--pretty')
-    const filePath = parsed.positionals[0] ?? null
-
-    const input = readInput(filePath)
-    const result = md2idx(input)
-    if (pretty) {
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
-    } else {
-      process.stdout.write(`${JSON.stringify(result)}\n`)
-    }
+    return
   }
+
+  emitResult(parsed)
 }
 
 // Tests

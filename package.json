@@ -24,9 +24,10 @@
     "url": "git+https://github.com/oubakiou/md2idx.git"
   },
   "bin": {
-    "md2idx": "dist/md2idx.mjs"
+    "md2idx": "dist/cli.mjs"
   },
   "files": [
+    "dist/cli.mjs",
     "dist/md2idx.mjs",
     "dist/md2idx.d.mts",
     "README.md",

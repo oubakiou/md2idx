@@ -37,7 +37,7 @@ export default defineConfig({
   },
   pack: {
     define: { 'import.meta.vitest': 'undefined' },
-    entry: ['src/md2idx.ts'],
+    entry: ['src/md2idx.ts', 'src/cli.ts'],
   },
   plugins: [],
   root: 'src',

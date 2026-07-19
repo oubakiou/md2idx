@@ -4,5 +4,6 @@ interface Md2idxResult {
   sections: string[];
 }
 declare const md2idx: (markdown: string) => Md2idxResult;
+declare const runCli: (argv: string[]) => void;
 //#endregion
-export { md2idx };
+export { md2idx, runCli };

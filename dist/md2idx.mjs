@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-import { readFileSync, realpathSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 //#region src/md2idx.ts
 const INACTIVE_FENCE = {
 	active: false,
@@ -8,10 +6,10 @@ const INACTIVE_FENCE = {
 	len: 0
 };
 const NO_PARAGRAPH = -1;
-const stripInlineMarkup = (text) => text.replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1").replace(/``([^`]*)``/g, "$1").replace(/`([^`]*)`/g, "$1").replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1").replace(/_{1,3}([^_]+)_{1,3}/g, "$1").replace(/~~([^~]+)~~/g, "$1");
+const stripInlineMarkup = (text) => text.replace(/!\[(?<text>[^\]]*)\]\([^)]*\)/g, "$<text>").replace(/\[(?<text>[^\]]*)\]\([^)]*\)/g, "$<text>").replace(/\[(?<text>[^\]]*)\]\[[^\]]*\]/g, "$<text>").replace(/``(?<text>[^`]*)``/g, "$<text>").replace(/`(?<text>[^`]*)`/g, "$<text>").replace(/\*{1,3}(?<text>[^*]+)\*{1,3}/g, "$<text>").replace(/_{1,3}(?<text>[^_]+)_{1,3}/g, "$<text>").replace(/~~(?<text>[^~]+)~~/g, "$<text>");
 const stripAtxTrailing = (line) => line.replace(/\s+#+\s*$/, "");
-const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
-const ATX_RE = /^ {0,3}(#{1,6})\s/;
+const FENCE_RE = /^ {0,3}(?<marker>`{3,}|~{3,})/;
+const ATX_RE = /^ {0,3}(?<hashes>#{1,6})\s/;
 const updateFenceState = (line, fence) => {
 	const opening = FENCE_RE.exec(line);
 	if (!opening) return fence;
@@ -20,17 +18,19 @@ const updateFenceState = (line, fence) => {
 		char: opening[1][0],
 		len: opening[1].length
 	};
-	const closing = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line);
+	const closing = /^ {0,3}(?<marker>`{3,}|~{3,})\s*$/.exec(line);
 	if (closing && line.trimStart().startsWith(fence.char) && closing[1].length >= fence.len) return INACTIVE_FENCE;
 	return fence;
 };
 const tryAtxHeading = (line, offset) => {
 	const match = ATX_RE.exec(line);
 	if (!match) return null;
+	const depth = match[1].length;
+	const rawText = line.slice(match[0].length);
 	return {
-		depth: match[1].length,
+		depth,
 		offset,
-		text: stripInlineMarkup(stripAtxTrailing(line.slice(match[0].length)).trim())
+		text: stripInlineMarkup(stripAtxTrailing(rawText).trim())
 	};
 };
 const isSetextH1 = (line) => /^ {0,3}={1,}\s*$/.test(line);
@@ -44,7 +44,8 @@ const trySetextFromState = (state, line, markdown) => {
 	if (state.paragraphStartOffset === NO_PARAGRAPH || state.prevWasFenceBoundary) return null;
 	const depth = setextDepth(line);
 	if (depth === null) return null;
-	const text = stripInlineMarkup(markdown.slice(state.paragraphStartOffset, state.offset).trimEnd().split("\n").map((pl) => pl.trim()).join(" "));
+	const rawText = markdown.slice(state.paragraphStartOffset, state.offset).trimEnd();
+	const text = stripInlineMarkup(rawText.split("\n").map((pl) => pl.trim()).join(" "));
 	return {
 		depth,
 		offset: state.paragraphStartOffset,
@@ -90,11 +91,13 @@ const parseHeadings = (markdown) => {
 		prevWasFenceBoundary: false
 	};
 	lines.reduce((state, line) => {
+		const fence = updateFenceState(line, state.fence);
+		const nextOffset = state.offset + line.length + 1;
 		return processLine(state, line, {
-			fence: updateFenceState(line, state.fence),
+			fence,
 			headings,
 			markdown,
-			nextOffset: state.offset + line.length + 1
+			nextOffset
 		});
 	}, initial);
 	return headings;
@@ -127,7 +130,8 @@ const normalizeCrlf = (text) => text.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
 const md2idx = (markdown) => {
 	const normalized = normalizeCrlf(markdown);
 	const headings = parseHeadings(normalized);
-	const preamble = buildPreamble(normalized, getFirstOffset(headings, normalized.length));
+	const firstOffset = getFirstOffset(headings, normalized.length);
+	const preamble = buildPreamble(normalized, firstOffset);
 	const headingSections = headings.map((heading, idx) => {
 		const end = getSectionEnd(headings, idx, normalized.length);
 		return normalized.slice(heading.offset, end).trimEnd();
@@ -145,13 +149,6 @@ const readInput = (filePath) => {
 	if (filePath) return readFileSync(filePath, "utf8");
 	return readFileSync(0, "utf8");
 };
-const isCli = () => {
-	try {
-		return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
-	} catch {
-		return false;
-	}
-};
 const parseCliArgs = (args) => {
 	const sepIdx = args.indexOf("--");
 	if (sepIdx !== -1) return {
@@ -163,25 +160,29 @@ const parseCliArgs = (args) => {
 		positionals: args.filter((arg) => !arg.startsWith("-"))
 	};
 };
-if (isCli()) {
-	const KNOWN_FLAGS = new Set([
-		"--pretty",
-		"--help",
-		"-h"
-	]);
-	const parsed = parseCliArgs(process.argv.slice(2));
+const KNOWN_FLAGS = /* @__PURE__ */ new Set([
+	"--pretty",
+	"--help",
+	"-h"
+]);
+const emitResult = (parsed) => {
+	const pretty = parsed.flags.includes("--pretty");
+	const filePath = parsed.positionals[0] ?? null;
+	const result = md2idx(readInput(filePath));
+	if (pretty) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+	else process.stdout.write(`${JSON.stringify(result)}\n`);
+};
+const runCli = (argv) => {
+	const parsed = parseCliArgs(argv);
 	const hasHelp = parsed.flags.includes("--help") || parsed.flags.includes("-h");
 	const unknownFlag = parsed.flags.find((flag) => !KNOWN_FLAGS.has(flag));
 	const hasError = Boolean(unknownFlag) || parsed.positionals.length > 1;
 	if (hasHelp || hasError) {
 		process.stderr.write(USAGE);
 		process.exitCode = Number(hasError);
-	} else {
-		const pretty = parsed.flags.includes("--pretty");
-		const result = md2idx(readInput(parsed.positionals[0] ?? null));
-		if (pretty) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-		else process.stdout.write(`${JSON.stringify(result)}\n`);
+		return;
 	}
-}
+	emitResult(parsed);
+};
 //#endregion
-export { md2idx };
+export { md2idx, runCli };
