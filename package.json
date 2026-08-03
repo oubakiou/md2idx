@@ -46,7 +46,8 @@
     "prepublishOnly": "npm run build",
     "build:watch": "vp build --watch",
     "dev": "vp dev",
-    "test": "vp test",
+    "test": "vp test && npm run test:skill",
+    "test:skill": "bash skills/md2idx-read/scripts/test-md2idx-run.sh",
     "test:watch": "vp test --watch"
   },
   "devDependencies": {

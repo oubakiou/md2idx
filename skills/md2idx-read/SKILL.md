@@ -9,7 +9,7 @@ name: md2idx-read
 
 A skill for reading large Markdown files efficiently using md2idx. Instead of loading an entire file into context, first fetch the index (heading table of contents), then selectively retrieve only the sections needed for the current task.
 
-The bundled `scripts/md2idx-run.sh` wrapper handles file size checking, md2idx command resolution (local build, PATH, npx), and execution. All Bash operations go through this single script, so one `permissions.allow` prefix covers the full workflow.
+The bundled `scripts/md2idx-run.sh` wrapper handles file size checking, exact md2idx command resolution, bounded execution, and output extraction. All Bash operations go through this single script, so one `permissions.allow` prefix covers the full workflow.
 
 ## When to use
 
@@ -40,8 +40,9 @@ Use the path that matches your agent's install directory throughout all commands
 The wrapper performs these steps internally:
 
 1. **File size check** — if the file is under 200 lines AND under 10 KB, it exits with code 2 and prints `SMALL: ... — use Read tool directly` to stderr. In that case, use the Read tool to read the file directly and stop.
-2. **md2idx command resolution** — tries `node dist/md2idx.mjs` (local build), then `md2idx` (PATH), then `npx -y md2idx` (auto-download). Exits with code 3 if none are available.
-3. **Execution** — runs the resolved md2idx with `jq` and outputs the result to stdout.
+2. **Dependency check** — requires `jq`; exits with code 4 when it is unavailable.
+3. **md2idx command resolution** — when running inside the md2idx source repository, uses its `dist/cli.mjs` after verifying the package identity. Otherwise it prefers the pinned `md2idx@0.3.0` through `npx`, then uses an unverified `md2idx` from `PATH` only when npx is unavailable. Set `MD2IDX_PREFER_PATH=1` to explicitly select a preinstalled binary for offline use. The network-capable `npx` path has a portable 120-second process-group timeout, configurable from 1 to 2,147,483 seconds with `MD2IDX_TIMEOUT_SECONDS`. Exits with code 3 if none are available.
+4. **Execution** — writes the complete md2idx JSON to a unique temporary file, then extracts output with `jq`. This prevents a failed jq expression from causing an EPIPE in md2idx.
 
 ### Step 1: Fetch the index
 
@@ -181,9 +182,22 @@ One `permissions.allow` rule covers the entire workflow. Use the path matching y
 }
 ```
 
+## Exit codes
+
+- `1`: input file not found
+- `2`: input is small enough to read directly
+- `3`: neither `md2idx` nor `npx` is available
+- `4`: `jq` is unavailable
+- `5`: md2idx execution failed
+- `6`: jq expression or extraction failed
+- `64`: invalid arguments or timeout configuration
+- `124`: the bounded npx execution timed out
+
 ## Notes
 
 - The wrapper uses the same md2idx binary for both index and section retrieval, guaranteeing consistent indices
 - md2idx output is deterministic for the same input and the same md2idx version
 - Section content is returned as raw Markdown strings, including the heading line itself
-- `npx -y md2idx` skips the install confirmation prompt; in network-restricted environments, pre-install md2idx globally instead
+- The fallback is pinned to `md2idx@0.3.0`; in network-restricted environments, pre-install that version globally instead
+- A PATH-only fallback cannot verify the installed md2idx version; pre-install v0.3.0 and set `MD2IDX_PREFER_PATH=1` for deterministic offline behavior
+- md2idx v0.3.0 requires Node.js 24 or newer
