@@ -15,6 +15,7 @@
   },
   "runArgs": ["--name", "${localEnv:USER}-md2idx"],
   "postCreateCommand": "./local_setup.sh",
+  "postStartCommand": "bash -lc 'cleanup_status=0; bash scripts/clean-devcontainer-disk.sh --threshold 90 || cleanup_status=$?; if [ \"$cleanup_status\" -ne 0 ]; then printf \"warning: devcontainer disk cleanup failed (exit %s); continuing startup\\n\" \"$cleanup_status\" >&2; fi'",
   "customizations": {
     "vscode": {
       "extensions": [],
